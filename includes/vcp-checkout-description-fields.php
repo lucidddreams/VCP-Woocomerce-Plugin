@@ -12,8 +12,7 @@ function vcp_description_fields( $description, $payment_id  ) {
         return $description;
     }
     
-    ob_start();
- 
+    ob_start(); 
 	
     echo '<div style="display: block;   height:auto;">';
     echo '<img style="display: block; width:30px; height:auto;" src="' . plugins_url('../assets/icon.png', __FILE__ ) . '">';
@@ -22,33 +21,10 @@ function vcp_description_fields( $description, $payment_id  ) {
 	if( $vcp_amount and  $vcp_amount > 0   ){
 		
 		echo '<div style="display: block;   height:auto;"> <b> '.number_format( $vcp_amount ,2).' VCP</b></div>';
-		
-		// echo getPassPhrase($num = 12);
-		    /*
-			woocommerce_form_field(
-				'card_code_number',
-				array(
-					'type' => 'password',
-					'label' =>__( 'Enter Passphrase.', 'vcp-payments-woo' ),
-					'class' => array( 'form-row', 'form-row-wide' ),
-					'required' => true,
-					'value'=>'####-####-####-####',
-					'data-mask'=>'####-####-####-####',
-				)
-			); 
-			woocommerce_form_field(
-				'reference_number',
-				array(
-					'type' => 'hidden', 
-				)
-			); */
-			
-			
+		 
 	}else{
 		echo "<b>Not available</b>" ;
-	}
-	
- 
+	} 
     echo '</div>';
 
     $description .= ob_get_clean();
@@ -66,23 +42,15 @@ function vcp_description_fields_validation() {
 }
 
 function checkout_update_order_meta( $order_id ) {
-	//if( 'vcp' === $_POST['payment_method']){
-	//	if( isset( $_POST['card_code_number'] ) || ! empty( $_POST['card_code_number'] ) ) {
-		   //update_post_meta( $order_id, 'card_code_number', $_POST['card_code_number'] );
-		   //update_post_meta( $order_id, 'reference_number', 'xxxxxxxxxx--');
-	//	}
-	//}
+	 
 }
 
 function order_data_after_billing_address( $order ) { 
-	if( 'vcp' === $order->get_payment_method()){
-		
+	if( 'vcp' === $order->get_payment_method()){ 
 			$post = get_post( $order->get_id() );
 					$echo ='';
 					if( isset( $post->post_content) and $post->post_content !=''){ 
-						$details = json_decode($post->post_content); 
-						 
-						//echo '<textarea>'.$details->transfer_details->amountNQT.'</textarea><br>' ;
+						$details = json_decode($post->post_content);  
 						echo ( (isset($details->accountRS) and $details->accountRS !="")?  'VCP account : <b>'.$details->accountRS.'</b> <br>':'');
 						echo ( (isset($details->vcp) and $details->vcp !="")?  'Total : <b>'.number_format($details->vcp, 2).' VCP</b> <br>':'');
 						echo 'Amount received : '.( (isset($details->transfer_details->transactionJSON->amountNQT) and $details->transfer_details->transactionJSON->amountNQT !="")?  '<b>'.number_format(($details->transfer_details->transactionJSON->amountNQT/100000000), 2).' VCP</b> <br>':'<b> 0.00 VCP</b> <br>');
@@ -91,19 +59,14 @@ function order_data_after_billing_address( $order ) {
 						
 						echo '<span id="sweep_span"></span><br>';
 						echo '<a href="#" class="woocommerce-button button view sweep" data-id="'.$order->get_id().'">Sweep</a>';
-						echo sweepJS();
-						//echo  $post->post_content;
-						
-						
+						echo sweepJS();  
 					}
 	}
 }
 
 
-function  sweepDetails($post_content){
-	 
-	if(isset( json_decode($post_content)->sweep_details)){
-		
+function  sweepDetails($post_content){ 
+	if(isset( json_decode($post_content)->sweep_details)){ 
 	$sweeps = json_decode($post_content)->sweep_details;
 	$li 	= '';
 	foreach($sweeps as $sw){
@@ -120,6 +83,8 @@ function order_item_meta_end( $item_id, $item, $order ) {
 }
  
  
+ 
+ 
 function getVCPValue( ){
 			global $woocommerce; 
 			if( ! getUSD_to_VCPRate() ) return false;
@@ -127,6 +92,8 @@ function getVCPValue( ){
 			
 			return   ( getBaseCurrency( get_woocommerce_currency() ) * WC()->cart->total) / getUSD_to_VCPRate()  ;// ."|".WC()->cart->total	."|". $usd_per_cuur."|". getVCPRate();
 }
+
+
  
 function getBaseCurrency( $target ){ 
 		$json = WC()->payment_gateways->payment_gateways()['vcp']->get_option('usd_to_other_currency_json');
@@ -137,12 +104,14 @@ function getBaseCurrency( $target ){
 }
 
 
+
 function getUSD_to_VCPRate(){ 
 		$usd_to_vcp_rate = WC()->payment_gateways->payment_gateways()['vcp']->get_option('usd_to_vcp_rate');
 		if( is_numeric( $usd_to_vcp_rate ) )  
 			return 1/$usd_to_vcp_rate  ; 
 		return false; 
 }
+ 
  
  
  function sweepJS(){
@@ -197,16 +166,9 @@ function getUSD_to_VCPRate(){
 															 
 							return false;							 
 						});
-
-
-
-							  
-								
+ 
 							///*******************	
 					}); ///
 
-				</script>";
- 
+				</script>"; 
  }
- 
- 

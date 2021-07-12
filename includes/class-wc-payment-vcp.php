@@ -28,7 +28,7 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
         $this->title              			= $this->get_option( 'title' );
         $this->icon 			  			= apply_filters( 'woocommerce_vcashpay_icon', plugins_url('../assets/icon.png', __FILE__ ) );
         $this->merchant_id        			= $this->get_option( 'merchant_id' );
-       // $this->merchant_token     		= $this->get_option( 'merchant_token' );
+		$this->network     					= $this->get_option( 'network' );
         $this->description        			= $this->get_option( 'description' );
         $this->instructions       			= $this->get_option( 'instructions' );
         $this->enable_for_methods 			= $this->get_option( 'enable_for_methods', array() ); 
@@ -36,20 +36,10 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
 
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
         add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_page' ) ); 
-       // add_filter( 'woocommerce_payment_complete_order_status', array( $this, 'change_payment_complete_order_status' ), 10, 3 );
-
+     
         // Customer Emails.
         add_action( 'woocommerce_email_before_order_table', array( $this, 'email_instructions' ), 10, 3 );
-		 
-		
-		 // Actions
-        //    add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
-        // add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'save_order_states'));
-
-		//add_action( 'woocommerce_before_thankyou', 'action_function_name_3316' );
-		 //               update_option('woocommerce_v_settings',
-         //       get_option( 'woocommerce_btcpay_settings', get_option('woocommerce_bitpay_settings', null) ) );
-    }
+	}
 
  
 	
@@ -58,10 +48,8 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
      */
     protected function setup_properties() {
         $this->id                 = 'vcp';
-        $this->icon 			  = apply_filters( 'woocommerce_vcashpay_icon', plugins_url('/assets/icon.png', __FILE__ ) );
-        //$this->icon             = apply_filters( 'woocommerce_cod_icon', '' );
-       // $this->merchant_id        = __( 'Enter your Merchant ID', 'vcp-payments-woo' );
-       // $this->merchant_token     = __( 'Enter your Token', 'vcp-payments-woo' );
+        $this->icon 			  = apply_filters( 'woocommerce_vcashpay_icon', plugins_url('/assets/icon.png', __FILE__ ) ); 
+        $this->network     		  = __( 'Enter network', 'vcp-payments-woo' );
         $this->method_title       = __( 'VCashPay - VCP', 'vcp-payments-woo' );
         $this->method_description = __( 'VCP is a decentralized, sustainable, and secure digital money focused on addressing the inefficiencies present in existing financial systems. Get VCP from trusted partners listed at <a href="https://vcashpay.com/">vcashpay.com</a>', 'vcp-payments-woo' );
         $this->has_fields         = false;
@@ -73,15 +61,15 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
      */
     public function init_form_fields() {
         $this->form_fields = array(
-		
+		 
             'enabled'            => array(
                 'title'       => __( 'Enable/Disable', 'vcp-payments-woo' ),
                 'label'       => __( 'Enable VCashPay option', 'vcp-payments-woo' ),
                 'type'        => 'checkbox',
                 'description' => '',
                 'default'     => 'no',
-            ),
-			
+            ), 
+			 
             'title'              => array(
                 'title'       => __( 'Title', 'vcp-payments-woo' ),
                 'type'        => 'text',
@@ -96,17 +84,24 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
                 'description' => __( 'VCP is a decentralized, sustainable, and secure digital money focused on addressing the inefficiencies present in existing financial systems. Get VCP from trusted partners listed at <a href="https://vcashpay.com/">vcashpay.com</a>', 'vcp-payments-woo' ),
                 'default'     => __( 'VCashPay - VCP', 'vcp-payments-woo' ),
                 'desc_tip'    => true,
-            )
-			 
-			,
+            ),
+			
             'instructions'       => array(
                 'title'       => __( 'Instructions', 'vcp-payments-woo' ),
                 'type'        => 'textarea',
                 'description' => __( 'Instructions that will be added to the thank you page.', 'vcp-payments-woo' ),
                 'default'     => __( 'VCashPay - VCP', 'vcp-payments-woo' ),
                 'desc_tip'    => true,
-            ),
-            
+            ), 
+			
+            'test_mode'            => array(
+                'title'       => __( 'Enable/Disable', 'vcp-payments-woo' ),
+                'label'       => __( 'Enable TEST MODE', 'vcp-payments-woo' ),
+                'type'        => 'checkbox',
+                'description' => '',
+                'default'     => 'no',
+            ), 
+			 
 			'payment_address' => array(
                 'title'   => __( 'Receiving VCP Address', 'vcp-payments-woo' ),
                 'label'   => __( 'Receiving VCP Address', 'vcp-payments-woo' ),
@@ -157,14 +152,7 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
                 'type'    => 'select',
                 'options'    => array('yes'=>'Enabled','no'=>'Disabled' ), 
 				'default' => 'no',
-            ),
-			
-			/* * /
-            'order_states' => array(
-                   'type' => 'order_states'
-            ),
-			/* */
-			
+            ), 
         );
     }
 
@@ -199,12 +187,7 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
         }
 
         $needs_shipping = apply_filters( 'woocommerce_cart_needs_shipping', $needs_shipping );
-
-        // Virtual order, with virtual disabled.
-     //   if ( ! $this->enable_for_virtual && ! $needs_shipping ) {
-      //      return false;
-      //  }
-
+ 
         // Only apply if all packages are being shipped via chosen method, or order is virtual.
         if ( ! empty( $this->enable_for_methods ) && $needs_shipping ) {
             $order_shipping_items            = is_object( $order ) ? $order->get_shipping_methods() : false;
@@ -245,16 +228,7 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
 
             return true;
         }
-
-        /*
-        if ( Constants::is_true( 'REST_REQUEST' ) ) {
-            global $wp;
-            if ( isset( $wp->query_vars['rest_route'] ) && false !== strpos( $wp->query_vars['rest_route'], '/payment_gateways' ) ) {
-                return true;
-            }
-        }
-        */ 
-
+ 
         return false;
     }
 
@@ -307,8 +281,7 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
                     $options[ $method->get_method_title() ][ $option_id ] = $option_title;
                 }
             }
-        }
-
+        } 
         return $options;
     }
 
@@ -320,14 +293,11 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
      * @param  array $order_shipping_items  Array of WC_Order_Item_Shipping objects.
      * @return array $canonical_rate_ids    Rate IDs in a canonical format.
      */
-    private function get_canonical_order_shipping_item_rate_ids( $order_shipping_items ) {
-
-        $canonical_rate_ids = array();
-
+    private function get_canonical_order_shipping_item_rate_ids( $order_shipping_items ) { 
+        $canonical_rate_ids = array(); 
         foreach ( $order_shipping_items as $order_shipping_item ) {
             $canonical_rate_ids[] = $order_shipping_item->get_method_id() . ':' . $order_shipping_item->get_instance_id();
-        }
-
+        } 
         return $canonical_rate_ids;
     }
 
@@ -342,8 +312,7 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
     private function get_canonical_package_rate_ids( $chosen_package_rate_ids ) {
 
         $shipping_packages  = WC()->shipping()->get_packages();
-        $canonical_rate_ids = array();
-
+        $canonical_rate_ids = array(); 
         if ( ! empty( $chosen_package_rate_ids ) && is_array( $chosen_package_rate_ids ) ) {
             foreach ( $chosen_package_rate_ids as $package_key => $chosen_package_rate_id ) {
                 if ( ! empty( $shipping_packages[ $package_key ]['rates'][ $chosen_package_rate_id ] ) ) {
@@ -375,33 +344,23 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
      * @param int $order_id Order ID.
      * @return array
      */
-    public function process_payment( $order_id ) {
-		
-        $order = wc_get_order( $order_id );
-
+    public function process_payment( $order_id ) { 
+        $order = wc_get_order( $order_id ); 
         if ( $order->get_total() > 0 ) { 
           $rpayment =  $this->vcp_payment_processing( $order ); 
-        } else { 
-        //    $order->payment_complete();
-        } 
-      
-        if($rpayment['status']==='waiting-confirmation'){ 
-		
-				writeText( "order#".$order_id." ".json_encode( $rpayment['json_response'] ) ); 
-				
+        }   
+        if($rpayment['status']==='waiting-confirmation'){  
+				writeText( "order#".$order_id." ".json_encode( $rpayment['json_response'] ) );  
 				WC()->cart->empty_cart(); 
-				 
-				$order->update_status( 'wc-fordeposit' );//get_option('vcp_statuses')['new'] ); //'wc-fordeposit' 
-				
+				$order->update_status( 'wc-fordeposit' ); 
 			  return array( 
 			 		'result'   => 'success',
-					'redirect' => home_url('/vcp/?orderid='.$order_id) //$this->get_return_url( $order )//'http://localhost/PNX.SHOP/waiting-blockchain-confirmation/',
+					'redirect' => home_url('/vcp/?orderid='.$order_id) 
 		 	 	);
         }else{
             wc_add_notice( __('Payment failed: ', 'woothemes') . "Error try again." , 'error' );
             return;
-        }
-      
+        } 
     }
 
  
@@ -412,48 +371,29 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
     private function vcp_payment_processing( $order){
         global  $woocommerce;
        
-        $currency       	= get_woocommerce_currency();//get_woocommerce_currency_symbol(); 
+        $currency       	= get_woocommerce_currency(); 
         $request_token  	= md5(uniqid(rand(), true));   
-		$recipient			=  WC()->payment_gateways->payment_gateways()['vcp']->get_option('payment_address') ; 
-		$timelimit			=  WC()->payment_gateways->payment_gateways()['vcp']->get_option('time_limit') ; 
-		 
-		$amountNQT			= getVCPValue(); 
-		
-		
-		 if( $amountNQT and $amountNQT > 0 ){
-	 
+		$recipient			= WC()->payment_gateways->payment_gateways()['vcp']->get_option('payment_address') ; 
+		$timelimit			= WC()->payment_gateways->payment_gateways()['vcp']->get_option('time_limit') ;  
+		$amountNQT			= getVCPValue();  
+		 if( $amountNQT and $amountNQT > 0 ){ 
 				$passphrase						= getPassPhrase($num = 12); 
-				/* */
 				$json_r							= get_vcp_response(array( 
 																	'requestType' 		=> 'getAccountId', 
 																	'secretPhrase' 		=> getCovertPassPhrase($passphrase )
 															)); 
-				/* */
-			 
-			
-				$json_response 					= json_decode($json_r);
-				
-				if( isset($json_response->accountRS) and $json_response->accountRS !=''){
-					
-					$json_response 					= json_decode($json_r, true);
-					
+				$json_response 					= json_decode($json_r); 
+				if( isset($json_response->accountRS) and $json_response->accountRS !=''){ 
+					$json_response 					= json_decode($json_r, true); 
 					$json_response['secretPhrase'] 	= $passphrase ;
 					$json_response['vcp'] 			= getVCPValue();
-					$json_response['deadline'] 		= date("U", strtotime('+'.$timelimit.' hours'));
-					//$json_response['deadline'] 		= date("U", strtotime('+15 minutes'));
-					
-					
-					
-					
-					wp_update_post( array('ID' => $order->get_id(),'post_content' => json_encode( $json_response ), 'post_mime_type'=>'waiting-confirmation')); 
-					
+					$json_response['deadline'] 		= date("U", strtotime('+'.$timelimit.' hours')); 
+					wp_update_post( array('ID' => $order->get_id(),'post_content' => json_encode( $json_response ), 'post_mime_type'=>'waiting-confirmation'));  
 					return array( 
 												"status" 			=> 	"waiting-confirmation",
 												"json_response" 	=>   json_encode( $json_response )
-								);
-								
-				}else{
-					
+								); 
+				}else{ 
 					return array(
 									"hash"		=>   '' ,
 									"status" 	=> 	"incorrect-passphrase"  ,
@@ -465,17 +405,9 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
 										"hash"		=>   '' ,
 										"status" 	=> 	"incorrect-passphrase"  
 									) ; 
-		}
- 
-       
+		} 
     }
-
-
-
-
-
-
-
+ 
 
 
 
@@ -528,12 +460,8 @@ class WC_Gateway_VCP extends WC_Payment_Gateway {
 
 
 
-function get_vcp_response( $data , $method='POST'){
-
-	
-      $url 				= "https://coin.vcashpay.com/nxt?";  
-	  
-	  $response = wp_safe_remote_post( $url, array( 
+function get_vcp_response( $data , $method='POST'){ 
+	  $response = wp_safe_remote_post( getNetworkURL() , array( 
 													'method' 		=> $method,
 													'timeout' 		=> 45,
 													'redirection' 	=> 5,
@@ -542,14 +470,11 @@ function get_vcp_response( $data , $method='POST'){
 													'headers' 		=> array(),
 													'cookies' 		=> array(),
 													'body' 			=> $data
-												) );
-		//return	$response;	
-		//writeText( json_encode( $response ));
+												) ); 
 		 if( !is_wp_error( $response ) ) {		
 				if( $response['response']['code'] == 200 )
 					return $response['body'];
-		 }else{
-					
+		 }else{ 
 			return false;
 		 }
 }
@@ -559,11 +484,10 @@ function get_vcp_response( $data , $method='POST'){
 	 $source 	= explode(" ", WC()->payment_gateways->payment_gateways()['vcp']->get_option('passphrase_source') ); 
 	 $tmp		= array();
 	 $i			= 0; 
-			while(	$i<=$num ){
-				//$word = $source[ rand(0, count($source)-1) ]; 
+			while(	$i<=$num ){ 
 				$n =  rand(0, count($source)-1); 
 				if( !in_array( $n, $tmp)){ 
-					$tmp[] = $n;//$word;
+					$tmp[] = $n; 
 					$i++;
 				}
 			} 
@@ -580,4 +504,28 @@ function get_vcp_response( $data , $method='POST'){
 				$tmp[] = $source[ $n ]; 
 			} 
 	 return trim( implode(" ",$tmp)); 
+ }
+ 
+ 
+ function getNetworkURL(){
+	 if( WC()->payment_gateways->payment_gateways()['vcp']->get_option('test_mode') =='yes' ){ 
+				return "https://testnet.vcashpay.com/nxt?";  
+		}else{
+				return "https://coin.vcashpay.com/nxt?"; 
+		}
+ } 
+ 
+ function getNetworkFEE(){
+	 if( WC()->payment_gateways->payment_gateways()['vcp']->get_option('test_mode')=='yes' ){ 
+				return 10000000;  
+		}else{
+				return 100000000; 
+		}
+ } 
+ 
+ 
+ function isOnTestMode(){
+	 if( WC()->payment_gateways->payment_gateways()['vcp']->get_option('test_mode')=='yes' ){ 
+				return '<div style="color:red">Warning: Test mode is Active!</div>';  
+		} 
  }

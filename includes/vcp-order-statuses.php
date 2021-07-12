@@ -3,8 +3,7 @@
 /**
  * Add new Invoiced status for woocommerce
  */
-  
-  
+   
   
  // New order status AFTER woo 2.2
 add_action( 'init', 'register_my_new_order_statusess' );
@@ -28,7 +27,7 @@ function register_my_new_order_statusess() {
         'exclude_from_search'       => false,
         'show_in_admin_all_list'    => true,
         'show_in_admin_status_list' => true,
-        'label_count'               => _n_noop( 'Waiting for fund transfer<span class="count">(%s)</span>', 'Waiting for fund transfer<span class="count">(%s)</span>', 'woocommerce' )
+        'label_count'               => _n_noop( 'Waiting for fund transfer <span class="count">(%s)</span>', 'Waiting for fund transfer<span class="count">(%s)</span>', 'woocommerce' )
     ) );
 	
 	
@@ -50,10 +49,7 @@ function register_my_new_order_statusess() {
         'show_in_admin_all_list'    => true,
         'show_in_admin_status_list' => true,
         'label_count'               => _n_noop( 'Partially paid <span class="count">(%s)</span>', 'Partially paid<span class="count">(%s)</span>', 'woocommerce' )
-    ) );
-	
-	
-	
+    ) ); 
 }
 
 add_filter( 'wc_order_statuses', 'my_new_wc_order_statusesz' );
